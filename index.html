@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Sharing Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: space-between;
+        }
+        .column {
+            flex: 1;
+            min-width: 300px;
+        }
+        .slider-container {
+            margin-bottom: 1.5rem;
+        }
+        .slider {
+            width: 100%;
+        }
+        .output {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        @media (max-width: 768px) {
+            .row {
+                flex-direction: column;
+            }
+        }
+        #monthlyPieChart {
+            max-width: 700px;
+            min-width: 300px;
+            margin: auto;
+        }
+        #monthlyBarGraph {
+            max-width: 400px;
+            min-width: 300px;
+            margin: auto;
+        }
+
+        .button-container {
+		    margin-top: 1rem;
+		    display: flex;
+		    gap: 0.5rem;
+		}
+
+		button {
+		    background-color: #4CAF50; /* Green background */
+		    color: white; /* White text */
+		    border: none; /* Remove default border */
+		    padding: 10px 20px; /* Padding */
+		    text-align: center; /* Centered text */
+		    text-decoration: none; /* Remove underline */
+		    display: inline-block; /* Inline-block layout */
+		    font-size: 16px; /* Font size */
+		    border-radius: 5px; /* Rounded corners */
+		    cursor: pointer; /* Pointer cursor on hover */
+		    transition: background-color 0.3s; /* Smooth background transition */
+		}
+
+		button:hover {
+		    background-color: #45a049; /* Darker green on hover */
+		}
+
+		button:active {
+		    background-color: #3e8e41; /* Even darker on click */
+		    transform: scale(0.98); /* Slight shrink on click */
+		}
+
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    
+
+    <div class="row">
+        <div class="column">
+        	<h1>Income Sharing Calculator</h1>
+            <!-- <h2>Sliders</h2> -->
+            <div class="slider-container">
+                <label for="roomSlider">% Based on Room Size: <span class="output" id="roomValue">40</span>%</label>
+                <input type="range" min="0" max="100" value="40" class="slider" oninput='updateSliders()' id="roomSlider">
+            </div>
+            <div class="slider-container">
+                <label for="incomeSlider">% Based on Income: <span class="output" id="incomeValue">30</span>%</label>
+                <input type="range" min="0" max="100" value="30" class="slider" oninput='updateSliders()' id="incomeSlider">
+            </div>
+            <div class="slider-container">
+                <label for="savingsSlider">% Based on Savings: <span class="output" id="savingsValue">30</span>%</label>
+                <input type="range" min="0" max="100" value="30" class="slider" oninput='updateSliders()' id="savingsSlider">
+            </div>
+
+            <div class="button-container">
+			    <button onclick="setSliders(100, 0, 0)">Current Paradigm - Room Size only</button>
+			    <button onclick="setSliders(0, 100, 0)">Income-Only Based</button>
+			    <button onclick="setSliders(50, 50, 0)">Split 50-50 Room Size and Income</button>
+			    <button onclick="setSliders(33.33, 33.33, 33.33)">Evenly across all 3</button>
+			</div>
+
+        </div>
+
+        <div class="column">
+            <h2>Cost Breakdown</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cost Type</th>
+                        <th>Total Yearly Cost</th>
+                        <th>Total Monthly Cost</th>
+                    </tr>
+                </thead>
+                <tbody id="costBreakdownTable">
+                    <!-- Cost rows will be generated dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="column">
+            <h2>Monthly Total Distribution</h2>
+
+    		<canvas id="monthlyBarGraph" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="column">
+            <h2>Resource Distribution</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Room Size (%)</th>
+                        <th> 
+                        	Editable Room Size (%)
+                        	<button onclick="resetRoomSizes()">Reset Room Sizes</button>
+                        </th>
+                        <th>Post-Tax Yearly Income (%)</th>
+                        <th>Editable Pre-Tax Yearly Income</th>
+                        <th>Savings (%)</th>
+                        <th>Editable Savings</th>
+                    </tr>
+                </thead>
+                <tbody id="resourceTable">
+                    <!-- Rows will be generated dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="column">
+            <h2>Monthly Breakdown</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Utilities</th>
+                        <th>Property Tax</th>
+                        <th>Maintenance</th>
+                        <th>Additional Share</th>
+                        <th>Total Monthly</th>
+                        <th>Total Yearly</th>
+                    </tr>
+                </thead>
+                <tbody id="breakdownTable">
+                    <!-- Rows will be generated dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+    	<div class="column">
+
+            <canvas id="monthlyPieChart" width="400" height="400"></canvas>
+
+
+    	</div>
+    	
+    </div>
+
+    
+    <script>
+        const totalCosts = {
+			utilities: 20356.68,
+			propertyTax: 12000.00,
+			maintenance: 15000.00,
+			additionalShare: 19200.00
+		};
+
+		let roomSizeTimeout; // Declare a timeout variable
+
+		// function handleRoomSizeEdit() {
+		//     // Clear any existing timeout to reset the delay
+		//     clearTimeout(roomSizeTimeout);
+
+		//     // Set a new timeout to run the normalization function after 5 seconds
+		//     roomSizeTimeout = setTimeout(() => {
+		//         normalizeRoomSize(); // Replace with your actual normalization function
+		//     }, 5000);
+		// }
+
+
+		function scalePercentages(roomValue, incomeValue, savingsValue) {
+			const total = roomValue + incomeValue + savingsValue;
+			return {
+				roomScaled: ((roomValue / total) * 100).toFixed(2),
+				incomeScaled: ((incomeValue / total) * 100).toFixed(2),
+				savingsScaled: ((savingsValue / total) * 100).toFixed(2)
+			};
+		}
+
+		function updateSliders() {
+			const roomSlider = document.getElementById('roomSlider').value;
+			const incomeSlider = document.getElementById('incomeSlider').value;
+			const savingsSlider = document.getElementById('savingsSlider').value;
+
+			// Scale the percentages
+			const scaled = scalePercentages(parseFloat(roomSlider), parseFloat(incomeSlider), parseFloat(savingsSlider));
+
+			// Update the displayed slider values and their scaled equivalents
+			document.getElementById('roomValue').innerText = `${roomSlider} (${scaled.roomScaled}%)`;
+			document.getElementById('incomeValue').innerText = `${incomeSlider} (${scaled.incomeScaled}%)`;
+			document.getElementById('savingsValue').innerText = `${savingsSlider} (${scaled.savingsScaled}%)`;
+
+			// Update the breakdown table using the scaled percentages
+			updateBreakdown(scaled.roomScaled / 100, scaled.incomeScaled / 100, scaled.savingsScaled / 100);
+		}
+
+		function setSliders(room, income, savings) {
+		    document.getElementById('roomSlider').value = room;
+		    document.getElementById('incomeSlider').value = income;
+		    document.getElementById('savingsSlider').value = savings;
+		    updateSliders(); // Call the update function to reflect changes immediately
+		}
+
+
+
+        function populateCostBreakdownTable() {
+		    const costTableBody = document.getElementById('costBreakdownTable');
+		    costTableBody.innerHTML = '';
+		    for (const [costType, yearlyCost] of Object.entries(totalCosts)) {
+		        const monthlyCost = (yearlyCost / 12).toFixed(2);
+		        const costTypeLabel = costType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+
+		        const row = `<tr>
+		            <td>${costTypeLabel}</td>
+		            <td><input type="number" value="${yearlyCost.toFixed(2)}" oninput="updateTotalCosts('${costType}', this.value)"></td>
+		            <td>$${monthlyCost}</td>
+		        </tr>`;
+		        costTableBody.innerHTML += row;
+		    }
+		}
+
+		function updateTotalCosts(costType, newValue) {
+		    totalCosts[costType] = parseFloat(newValue);
+		    populateCostBreakdownTable();
+		    updateBreakdown();
+		    updateSliders();
+		}
+
+        const data = [
+            { name: 'Allie', roomSize: 0.1371, yearlyIncome: 40000, savings: 5000 },
+            { name: 'Brendan', roomSize: 0.1771, yearlyIncome: 125000, savings: 150000 },
+            { name: 'Egan', roomSize: 0.0871, yearlyIncome: 30000, savings: 2000 },
+            { name: 'Ellen', roomSize: 0, yearlyIncome: 0, savings: 0 },
+            { name: 'Emily', roomSize: 0.1771, yearlyIncome: 45000, savings: 7000 },
+            { name: 'Jeff', roomSize: 0.0871, yearlyIncome: 30000, savings: 2000 },
+            { name: 'Kevin', roomSize: 0.1671, yearlyIncome: 40000, savings: 5000 },
+            { name: 'Rachel', roomSize: 0.1671, yearlyIncome: 40000, savings: 5000 }
+        ];
+
+        let originalRoomSizes = data.map(person => person.roomSize); // Store original room sizes
+        function resetRoomSizes() {
+		    data.forEach((person, index) => {
+		        person.roomSize = originalRoomSizes[index];
+		    });
+		    populateResourceTable();
+		    updateSliders();
+		    populateCostBreakdownTable();
+		}
+
+
+
+        const totalIncome = data.reduce((sum, person) => sum + person.yearlyIncome, 0);
+        const totalSavings = data.reduce((sum, person) => sum + person.savings, 0);
+        const totalRoomSize = data.reduce((sum, person) => sum + person.roomSize, 0);
+
+        const taxBrackets = [
+		    { threshold: 0, rate: 0.1 },
+		    { threshold: 11600, rate: 0.12 },
+		    { threshold: 47150, rate: 0.22 },
+		    { threshold: 100525, rate: 0.24 },
+		    { threshold: 191950, rate: 0.32 },
+		    { threshold: 243725, rate: 0.35 },
+		    { threshold: 609350, rate: 0.37 }
+		];
+
+		function calculatePostTaxIncome(income) {
+		    let tax = 0;
+		    let previousThreshold = 0;
+
+		    for (let i = 0; i < taxBrackets.length; i++) {
+		        const { threshold, rate } = taxBrackets[i];
+		        if (income > threshold) {
+		            const taxableIncome = Math.min(income, threshold) - previousThreshold;
+		            tax += taxableIncome * rate;
+		            previousThreshold = threshold;
+		        } else {
+		            tax += (income - previousThreshold) * rate;
+		            break;
+		        }
+		    }
+
+		    return income - tax;
+		}
+
+		function populateResourceTable() {
+		    const resourceTableBody = document.getElementById('resourceTable');
+		    resourceTableBody.innerHTML = '';
+
+		    const totalIncome = data.reduce((sum, person) => sum + person.yearlyIncome, 0);
+		    const totalSavings = data.reduce((sum, person) => sum + person.savings, 0);
+		    const totalRoomSize = data.reduce((sum, person) => sum + person.roomSize, 0);
+		    const totalPostTaxIncome = data.reduce((sum, person) => sum + calculatePostTaxIncome(person.yearlyIncome), 0);
+
+
+		    data.forEach((person, index) => {
+		        const roomPercent = ((person.roomSize / totalRoomSize) * 100).toFixed(2);
+		        const preTaxIncome = person.yearlyIncome;
+		        const postTaxIncome = calculatePostTaxIncome(preTaxIncome).toFixed(2);
+		        const postTaxIncomePercent = ((postTaxIncome / totalPostTaxIncome) * 100).toFixed(2);
+		        const savingsPercent = ((person.savings / totalSavings) * 100).toFixed(2);
+
+		        const row = `<tr>
+		            <td>${person.name}</td>
+		            <td id="roomSizePercent-${index}">${roomPercent}%</td>
+		            <td><input type="number" value="${person.roomSize}" min="0" step=".01"
+					    onchange="updateRoomSize(${index}, this.value)" /></td>
+		            <td>${postTaxIncomePercent}%</td>
+		            <td><input type="number" value="${preTaxIncome}" min="0"
+		                onchange="updateData(${index}, 'yearlyIncome', this.value)" /></td>
+		            <td>${savingsPercent}%</td>
+		            <td><input type="number" value="${person.savings}" min="0"
+		                onchange="updateData(${index}, 'savings', this.value)" /></td>
+		        </tr>`;
+		        resourceTableBody.innerHTML += row;
+		        person.roomPercent = roomPercent;
+		        person.incomePercent = postTaxIncomePercent;
+		        person.savingsPercent = savingsPercent;
+
+		    });
+
+		    // Add totals row
+		    const totalRoomPercent = data.reduce((sum, person) => sum + ((person.roomSize / totalRoomSize) * 100), 0).toFixed(2);
+			const totalPostTaxIncomePercent = data.reduce((sum, person) => {
+			    const postTaxIncome = calculatePostTaxIncome(person.yearlyIncome);
+			    return sum + ((postTaxIncome / totalPostTaxIncome) * 100);
+			}, 0).toFixed(2);
+			const totalSavingsPercent = data.reduce((sum, person) => sum + ((person.savings / totalSavings) * 100), 0).toFixed(2);
+
+		    const totalsRow = `<tr style="font-weight: bold;">
+		        <td>Total</td>
+		        <td>${totalRoomPercent}%</td>
+		        <td></td>
+		        <td>${totalPostTaxIncomePercent}%</td>
+		        <td>$${totalIncome.toLocaleString()}</td>
+		        <td>${totalSavingsPercent}%</td>
+		        <td>$${totalSavings.toLocaleString()}</td>
+		    </tr>`;
+		    resourceTableBody.innerHTML += totalsRow;
+		}
+
+		function updateRoomSize(index, newSize) {
+		    // Update the room size value for the specific index
+		    data[index].roomSize = parseFloat(newSize);
+
+		    // Calculate the total square footage
+		    const totalSize = data.reduce((sum, person) => sum + person.roomSize, 0);
+
+		    // Update and normalize the Room Size % for each entry
+		    data.forEach((person, i) => {
+		        const normalizedPercent = ((person.roomSize / totalSize) * 100).toFixed(2);
+		        document.getElementById(`roomSizePercent-${i}`).textContent = `${normalizedPercent}%`;
+		        person.roomPercent = normalizedPercent; // Update the data structure if needed
+		    });
+
+		    // Recalculate the tables and charts
+		    populateResourceTable();
+		    updateSliders();
+		    populateCostBreakdownTable();
+		}
+
+
+		function updateData(index, field, value) {
+		    if (field === 'roomSize') {
+		        data[index][field] = parseFloat(value) / 100;
+		    } else {
+		        data[index][field] = parseFloat(value);
+		    }
+
+		    // Recalculate post-tax income if pre-tax income is updated
+		    if (field === 'yearlyIncome') {
+		        data[index].postTaxIncome = calculatePostTaxIncome(data[index].yearlyIncome);
+		    }
+
+		    // Recalculate the totals and update the tables
+		    populateResourceTable();
+		    updateSliders();
+		    populateCostBreakdownTable();
+		}
+
+
+
+
+        function calculateShare(cost, roomPercentage, incomePercentage, savingsPercentage, person) {
+		    const roomShare = roomPercentage * (person.roomPercent / 100); // Use normalized room percentage
+		    const incomeShare = incomePercentage * (person.incomePercent / 100); // Use post-tax income percentage
+		    const savingsShare = savingsPercentage * (person.savingsPercent / 100); // Use savings percentage
+		    return cost * (roomShare + incomeShare + savingsShare);
+		}
+
+
+        function updateBreakdown(roomPercentage, incomePercentage, savingsPercentage) {
+		    const tableBody = document.getElementById('breakdownTable');
+		    tableBody.innerHTML = '';
+
+		    let totalUtilities = 0;
+			let totalPropertyTax = 0;
+			let totalMaintenance = 0;
+			let totalAdditionalShare = 0;
+			let totalOverallMonthly = 0;
+			let totalOverallYearly = 0;
+			const monthlyContributions = {};
+
+		    data.forEach(person => {
+			    const utilities = calculateShare(totalCosts.utilities / 12, roomPercentage, incomePercentage, savingsPercentage, person).toFixed(2);
+			    const propertyTax = calculateShare(totalCosts.propertyTax / 12, roomPercentage, incomePercentage, savingsPercentage, person).toFixed(2);
+			    const maintenance = calculateShare(totalCosts.maintenance / 12, roomPercentage, incomePercentage, savingsPercentage, person).toFixed(2);
+			    const additionalShare = calculateShare(totalCosts.additionalShare / 12, roomPercentage, incomePercentage, savingsPercentage, person).toFixed(2);
+			    const totalMonthly = (parseFloat(utilities) + parseFloat(propertyTax) + parseFloat(maintenance) + parseFloat(additionalShare)).toFixed(2);
+			    const totalYearly = (totalMonthly * 12).toFixed(2);
+
+			    const row = `<tr>
+			        <td>${person.name}</td>
+			        <td>$${utilities}</td>
+			        <td>$${propertyTax}</td>
+			        <td>$${maintenance}</td>
+			        <td>$${additionalShare}</td>
+			        <td>$${totalMonthly}</td>
+			        <td>$${totalYearly}</td>
+			    </tr>`;
+			    tableBody.innerHTML += row;
+
+			    // Update total accumulators
+			    monthlyContributions[person.name] = parseFloat(totalMonthly);
+			    totalUtilities += parseFloat(utilities);
+			    totalPropertyTax += parseFloat(propertyTax);
+			    totalMaintenance += parseFloat(maintenance);
+			    totalAdditionalShare += parseFloat(additionalShare);
+			    totalOverallMonthly += parseFloat(totalMonthly);
+			    totalOverallYearly += parseFloat(totalYearly);
+			});
+
+			// Add totals row at the bottom
+			const totalsRow = `<tr style="font-weight:bold">
+			    <td>Total</td>
+			    <td>$${totalUtilities.toFixed(2)}</td>
+			    <td>$${totalPropertyTax.toFixed(2)}</td>
+			    <td>$${totalMaintenance.toFixed(2)}</td>
+			    <td>$${totalAdditionalShare.toFixed(2)}</td>
+			    <td>$${totalOverallMonthly.toFixed(2)}</td>
+			    <td>$${totalOverallYearly.toFixed(2)}</td>
+			</tr>`;
+			tableBody.innerHTML += totalsRow;
+
+
+			createMonthlyPieChart(monthlyContributions);
+			createBarGraph(monthlyContributions);
+		}
+		function createMonthlyPieChart(contributions) {
+			const ctx = document.getElementById('monthlyPieChart').getContext('2d');
+			if (window.myPieChart) {
+				window.myPieChart.destroy();
+			}
+
+			// Prepare data for the pie chart
+			const labels = Object.keys(contributions);
+			const data = Object.values(contributions);
+
+			window.myPieChart = new Chart(ctx, {
+				type: 'pie',
+				data: {
+					labels: labels,
+					datasets: [{
+						data: data,
+						backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360']
+					}]
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						legend: {
+							position: 'top'
+						}
+					}
+				}
+			});
+		}
+		function createBarGraph(contributions) {
+		    const ctx = document.getElementById('monthlyBarGraph').getContext('2d');
+		    if (window.myBarChart) {
+		        window.myBarChart.destroy();
+		    }
+
+		    const labels = Object.keys(contributions);
+		    const data = Object.values(contributions);
+
+		    window.myBarChart = new Chart(ctx, {
+		        type: 'bar',
+		        data: {
+		            labels: labels,
+		            datasets: [{
+		                label: 'Monthly Contributions',
+		                data: data,
+		                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360']
+		            }]
+		        },
+		        options: {
+		            responsive: true,
+		            scales: {
+		                y: {
+		                    beginAtZero: true
+		                }
+		            },
+		            plugins: {
+		                legend: {
+		                    display: false
+		                }
+		            }
+		        }
+		    });
+		}
+
+		window.onload = () => {
+		    populateCostBreakdownTable();
+		    populateResourceTable();
+		    updateSliders();
+		};
+	</script>
+</body>
+</html>	
