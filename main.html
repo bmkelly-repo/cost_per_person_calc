@@ -227,6 +227,7 @@
 
     
     <script>
+
         const totalCosts = {
 			utilities: 20356.68,
 			propertyTax: 12000.00,
@@ -456,7 +457,7 @@
 		        const row = `
 		            <tr>
 		                <td class="border border-gray-300 p-2">${person.name}</td>
-		                <td class="border border-gray-300 p-2">${roomPercent}%</td>
+		                <td class="border border-gray-300 p-2" id="roomSizePercent-${index}">${roomPercent}%</td>
 		                <td class="border border-gray-300 p-2">
 		                    <input type="number" value="${person.roomSize}" min="0" step=".01" class="w-full p-1 border border-gray-400 rounded" onchange="updateRoomSize(${index}, this.value)">
 		                </td>
