@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Income Sharing Calculator</title>
-    <style>
+    <!-- style>
         body {
             font-family: Arial, sans-serif;
             margin: 2rem;
@@ -90,114 +90,140 @@
 		}
 
 
-    </style>
+    </style> -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Sharing Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    
+<body class="p-8 space-y-8">
 
-    <div class="row">
-        <div class="column">
-        	<h1>Income Sharing Calculator</h1>
-            <!-- <h2>Sliders</h2> -->
-            <div class="slider-container">
-                <label for="roomSlider">% Based on Room Size: <span class="output" id="roomValue">40</span>%</label>
-                <input type="range" min="0" max="100" value="40" class="slider" oninput='updateSliders()' id="roomSlider">
+    <div class="flex flex-wrap gap-4 justify-between">
+    	<div class="w-full sm:w-1/2 md:w-1/4">
+            <h1 class="text-2xl font-bold">Income Sharing Calculator</h1>
+            <div class="space-y-4">
+                <div>
+                    <label for="roomSlider" class="block font-medium">% Based on Room Size: <span id="roomValue" class="font-bold">40</span>%</label>
+                    <input type="range" min="0" max="100" value="40" class="w-full mt-1" oninput="updateSliders()" id="roomSlider">
+                </div>
+                <div>
+                    <label for="incomeSlider" class="block font-medium">% Based on Income: <span id="incomeValue" class="font-bold">30</span>%</label>
+                    <input type="range" min="0" max="100" value="30" class="w-full mt-1" oninput="updateSliders()" id="incomeSlider">
+                </div>
+                <div>
+                    <label for="savingsSlider" class="block font-medium">% Based on Savings: <span id="savingsValue" class="font-bold">30</span>%</label>
+                    <input type="range" min="0" max="100" value="30" class="w-full mt-1" oninput="updateSliders()" id="savingsSlider">
+                </div>
             </div>
-            <div class="slider-container">
-                <label for="incomeSlider">% Based on Income: <span class="output" id="incomeValue">30</span>%</label>
-                <input type="range" min="0" max="100" value="30" class="slider" oninput='updateSliders()' id="incomeSlider">
-            </div>
-            <div class="slider-container">
-                <label for="savingsSlider">% Based on Savings: <span class="output" id="savingsValue">30</span>%</label>
-                <input type="range" min="0" max="100" value="30" class="slider" oninput='updateSliders()' id="savingsSlider">
-            </div>
-
-            <div class="button-container">
-			    <button onclick="setSliders(100, 0, 0)">Current Paradigm - Room Size only</button>
-			    <button onclick="setSliders(0, 100, 0)">Income-Only Based</button>
-			    <button onclick="setSliders(50, 50, 0)">Split 50-50 Room Size and Income</button>
-			    <button onclick="setSliders(33.33, 33.33, 33.33)">Evenly across all 3</button>
+            <div class="flex gap-2 mt-4">
+			    <button onclick="setSliders(100, 0, 0)" class="bg-gradient-to-r from-green-300 via-cyan-400 to-blue-600 text-white px-3 py-1 text-sm rounded shadow-md hover:from-green-400 hover:via-cyan-500 hover:to-blue-700 hover:scale-105 transition duration-300 ease-in-out">
+			        Current Paradigm - Room Size only
+			    </button>
+			    <button onclick="setSliders(0, 100, 0)" class="bg-gradient-to-r from-green-300 via-cyan-400 to-blue-600 text-white px-3 py-1 text-sm rounded shadow-md hover:from-green-400 hover:via-cyan-500 hover:to-blue-700 hover:scale-105 transition duration-300 ease-in-out">
+			        Income-Only Based
+			    </button>
+			    <button onclick="setSliders(50, 50, 0)" class="bg-gradient-to-r from-green-300 via-cyan-400 to-blue-600 text-white px-3 py-1 text-sm rounded shadow-md hover:from-green-400 hover:via-cyan-500 hover:to-blue-700 hover:scale-105 transition duration-300 ease-in-out">
+			        Split 50-50 Room Size and Income
+			    </button>
+			    <button onclick="setSliders(33.33, 33.33, 33.33)" class="bg-gradient-to-r from-green-300 via-cyan-400 to-blue-600 text-white px-3 py-1 text-sm rounded shadow-md hover:from-green-400 hover:via-cyan-500 hover:to-blue-700 hover:scale-105 transition duration-300 ease-in-out">
+			        Evenly across all 3
+			    </button>
 			</div>
+
+
+
+            <div class="button-container mt-4 flex flex-col gap-2 items-start">
+			    <div class="flex gap-2">
+			        <input type="text" id="settingsName" placeholder="Enter settings name" class="p-2 border rounded w-48">
+			        <button onclick="saveSettings()" class="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1 rounded hover:from-purple-600 hover:to-blue-600 active:from-purple-700 active:to-blue-700 transition">
+			            Save Settings
+			        </button>
+			    </div>
+			    <div class="flex gap-2">
+			        <select id="settingsDropdown" class="p-2 border rounded w-48">
+			            <option value="">Select saved settings</option>
+			        </select>
+			        <button onclick="loadSettings()" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-1 rounded hover:from-indigo-600 hover:to-purple-600 active:from-indigo-700 active:to-purple-700 transition">
+			            Load Settings
+			        </button>
+			    </div>
+			</div>
+
+
 
         </div>
 
-        <div class="column">
-            <h2>Cost Breakdown</h2>
-            <table>
+         
+
+        <div class="w-full sm:w-1/2 md:w-1/4">
+            <h2 class="text-xl font-semibold">Monthly Total Distribution</h2>
+            <canvas id="monthlyBarGraph" class="mt-4"></canvas>
+        </div>
+
+        <div class="w-full sm:w-1/2 md:w-1/4">
+            <h2 class="text-xl font-semibold">Cost Breakdown</h2>
+            <table class="table-auto w-full border-collapse mt-4">
                 <thead>
                     <tr>
-                        <th>Cost Type</th>
-                        <th>Total Yearly Cost</th>
-                        <th>Total Monthly Cost</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Cost Type</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Total Yearly Cost</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Total Monthly Cost</th>
                     </tr>
                 </thead>
-                <tbody id="costBreakdownTable">
+                <tbody id="costBreakdownTable" class="text-center">
                     <!-- Cost rows will be generated dynamically -->
                 </tbody>
             </table>
         </div>
-
-        <div class="column">
-            <h2>Monthly Total Distribution</h2>
-
-    		<canvas id="monthlyBarGraph" width="400" height="400"></canvas>
-        </div>
     </div>
 
-    <div class="row">
-        <div class="column">
-            <h2>Resource Distribution</h2>
-            <table>
+    <div class="flex flex-wrap gap-8">
+        <div class="flex-1 min-w-[300px]">
+            <h2 class="text-xl font-semibold">Resource Distribution</h2>
+            <table class="table-auto w-full border-collapse mt-4">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Room Size (%)</th>
-                        <th> 
-                        	Editable Room Size (%)
-                        	<button onclick="resetRoomSizes()">Reset Room Sizes</button>
-                        </th>
-                        <th>Post-Tax Yearly Income (%)</th>
-                        <th>Editable Pre-Tax Yearly Income</th>
-                        <th>Savings (%)</th>
-                        <th>Editable Savings</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Name</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Room Size (%)</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Editable Room Size (%)</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Post-Tax Yearly Income (%)</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Editable Pre-Tax Yearly Income</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Savings (%)</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Editable Savings</th>
                     </tr>
                 </thead>
-                <tbody id="resourceTable">
+                <tbody id="resourceTable" class="text-center">
                     <!-- Rows will be generated dynamically -->
                 </tbody>
             </table>
         </div>
 
-        <div class="column">
-            <h2>Monthly Breakdown</h2>
-            <table>
+        <div class="flex-1 min-w-[300px]">
+            <h2 class="text-xl font-semibold">Monthly Breakdown</h2>
+            <table class="table-auto w-full border-collapse mt-4">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Utilities</th>
-                        <th>Property Tax</th>
-                        <th>Maintenance</th>
-                        <th>Additional Share</th>
-                        <th>Total Monthly</th>
-                        <th>Total Yearly</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Name</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Utilities</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Property Tax</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Maintenance</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Additional Share</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Total Monthly</th>
+                        <th class="border border-gray-300 p-2 bg-gray-100">Total Yearly</th>
                     </tr>
                 </thead>
-                <tbody id="breakdownTable">
+                <tbody id="breakdownTable" class="text-center">
                     <!-- Rows will be generated dynamically -->
                 </tbody>
             </table>
         </div>
     </div>
-    <div class="row">
-    	<div class="column">
 
-            <canvas id="monthlyPieChart" width="400" height="400"></canvas>
-
-
-    	</div>
-    	
+    <div class="flex justify-center mt-8">
+        <canvas id="monthlyPieChart" class="max-w-[700px]"></canvas>
     </div>
+
 
     
     <script>
@@ -219,6 +245,78 @@
 		//         normalizeRoomSize(); // Replace with your actual normalization function
 		//     }, 5000);
 		// }
+
+		// Function to save the current settings
+		function saveSettings() {
+		    const settingsName = document.getElementById('settingsName').value.trim();
+		    if (!settingsName) {
+		        alert('Please enter a name for the settings.');
+		        return;
+		    }
+
+		    // Gather current slider values and resource distribution data
+		    const roomSlider = document.getElementById('roomSlider').value;
+		    const incomeSlider = document.getElementById('incomeSlider').value;
+		    const savingsSlider = document.getElementById('savingsSlider').value;
+
+		    const resourceData = data.map(person => ({
+		        name: person.name,
+		        roomSize: person.roomSize,
+		        yearlyIncome: person.yearlyIncome,
+		        savings: person.savings
+		    }));
+
+		    const settings = {
+		        roomSlider,
+		        incomeSlider,
+		        savingsSlider,
+		        resourceData
+		    };
+
+		    // Save to localStorage
+		    localStorage.setItem(`settings_${settingsName}`, JSON.stringify(settings));
+
+		    // Update the dropdown with the new settings
+		    const dropdown = document.getElementById('settingsDropdown');
+		    const option = document.createElement('option');
+		    option.value = `settings_${settingsName}`;
+		    option.textContent = settingsName;
+		    dropdown.appendChild(option);
+
+		    alert('Settings saved successfully!');
+		}
+
+		// Function to load selected settings
+		function loadSettings() {
+		    const dropdown = document.getElementById('settingsDropdown');
+		    const selectedSetting = dropdown.value;
+
+		    if (!selectedSetting) {
+		        alert('Please select a setting to load.');
+		        return;
+		    }
+
+		    const settings = JSON.parse(localStorage.getItem(selectedSetting));
+		    if (!settings) {
+		        alert('Selected settings not found.');
+		        return;
+		    }
+
+		    // Apply loaded slider values
+		    setSliders(settings.roomSlider, settings.incomeSlider, settings.savingsSlider);
+
+		    // Apply loaded resource data
+		    data.forEach((person, index) => {
+		        person.roomSize = settings.resourceData[index].roomSize;
+		        person.yearlyIncome = settings.resourceData[index].yearlyIncome;
+		        person.savings = settings.resourceData[index].savings;
+		    });
+
+		    // Re-render the tables and charts
+		    populateResourceTable();
+		    populateCostBreakdownTable();
+		    updateSliders();
+		}
 
 
 		function scalePercentages(roomValue, incomeValue, savingsValue) {
@@ -263,11 +361,14 @@
 		        const monthlyCost = (yearlyCost / 12).toFixed(2);
 		        const costTypeLabel = costType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
 
-		        const row = `<tr>
-		            <td>${costTypeLabel}</td>
-		            <td><input type="number" value="${yearlyCost.toFixed(2)}" oninput="updateTotalCosts('${costType}', this.value)"></td>
-		            <td>$${monthlyCost}</td>
-		        </tr>`;
+		        const row = `
+		            <tr>
+		                <td class="border border-gray-300 p-2">${costTypeLabel}</td>
+		                <td class="border border-gray-300 p-2">
+		                    <input type="number" value="${yearlyCost.toFixed(2)}" class="w-full p-1 border border-gray-400 rounded" oninput="updateTotalCosts('${costType}', this.value)">
+		                </td>
+		                <td class="border border-gray-300 p-2">$${monthlyCost}</td>
+		            </tr>`;
 		        costTableBody.innerHTML += row;
 		    }
 		}
@@ -352,19 +453,24 @@
 		        const postTaxIncomePercent = ((postTaxIncome / totalPostTaxIncome) * 100).toFixed(2);
 		        const savingsPercent = ((person.savings / totalSavings) * 100).toFixed(2);
 
-		        const row = `<tr>
-		            <td>${person.name}</td>
-		            <td id="roomSizePercent-${index}">${roomPercent}%</td>
-		            <td><input type="number" value="${person.roomSize}" min="0" step=".01"
-					    onchange="updateRoomSize(${index}, this.value)" /></td>
-		            <td>${postTaxIncomePercent}%</td>
-		            <td><input type="number" value="${preTaxIncome}" min="0"
-		                onchange="updateData(${index}, 'yearlyIncome', this.value)" /></td>
-		            <td>${savingsPercent}%</td>
-		            <td><input type="number" value="${person.savings}" min="0"
-		                onchange="updateData(${index}, 'savings', this.value)" /></td>
-		        </tr>`;
+		        const row = `
+		            <tr>
+		                <td class="border border-gray-300 p-2">${person.name}</td>
+		                <td class="border border-gray-300 p-2">${roomPercent}%</td>
+		                <td class="border border-gray-300 p-2">
+		                    <input type="number" value="${person.roomSize}" min="0" step=".01" class="w-full p-1 border border-gray-400 rounded" onchange="updateRoomSize(${index}, this.value)">
+		                </td>
+		                <td class="border border-gray-300 p-2">${postTaxIncomePercent}%</td>
+		                <td class="border border-gray-300 p-2">
+		                    <input type="number" value="${preTaxIncome}" min="0" class="w-full p-1 border border-gray-400 rounded" onchange="updateData(${index}, 'yearlyIncome', this.value)">
+		                </td>
+		                <td class="border border-gray-300 p-2">${savingsPercent}%</td>
+		                <td class="border border-gray-300 p-2">
+		                    <input type="number" value="${person.savings}" min="0" class="w-full p-1 border border-gray-400 rounded" onchange="updateData(${index}, 'savings', this.value)">
+		                </td>
+		            </tr>`;
 		        resourceTableBody.innerHTML += row;
+
 		        person.roomPercent = roomPercent;
 		        person.incomePercent = postTaxIncomePercent;
 		        person.savingsPercent = savingsPercent;
@@ -379,15 +485,16 @@
 			}, 0).toFixed(2);
 			const totalSavingsPercent = data.reduce((sum, person) => sum + ((person.savings / totalSavings) * 100), 0).toFixed(2);
 
-		    const totalsRow = `<tr style="font-weight: bold;">
-		        <td>Total</td>
-		        <td>${totalRoomPercent}%</td>
-		        <td></td>
-		        <td>${totalPostTaxIncomePercent}%</td>
-		        <td>$${totalIncome.toLocaleString()}</td>
-		        <td>${totalSavingsPercent}%</td>
-		        <td>$${totalSavings.toLocaleString()}</td>
-		    </tr>`;
+		    const totalsRow = `
+		        <tr class="font-bold">
+		            <td class="border border-gray-300 p-2">Total</td>
+		            <td class="border border-gray-300 p-2">${totalRoomPercent}%</td>
+		            <td class="border border-gray-300 p-2"></td>
+		            <td class="border border-gray-300 p-2">${totalPostTaxIncomePercent}%</td>
+		            <td class="border border-gray-300 p-2">$${totalIncome.toLocaleString()}</td>
+		            <td class="border border-gray-300 p-2">${totalSavingsPercent}%</td>
+		            <td class="border border-gray-300 p-2">$${totalSavings.toLocaleString()}</td>
+		        </tr>`;
 		    resourceTableBody.innerHTML += totalsRow;
 		}
 
@@ -461,16 +568,17 @@
 			    const totalMonthly = (parseFloat(utilities) + parseFloat(propertyTax) + parseFloat(maintenance) + parseFloat(additionalShare)).toFixed(2);
 			    const totalYearly = (totalMonthly * 12).toFixed(2);
 
-			    const row = `<tr>
-			        <td>${person.name}</td>
-			        <td>$${utilities}</td>
-			        <td>$${propertyTax}</td>
-			        <td>$${maintenance}</td>
-			        <td>$${additionalShare}</td>
-			        <td>$${totalMonthly}</td>
-			        <td>$${totalYearly}</td>
-			    </tr>`;
-			    tableBody.innerHTML += row;
+			    const row = `
+		            <tr>
+		                <td class="border border-gray-300 p-2">${person.name}</td>
+		                <td class="border border-gray-300 p-2">$${utilities}</td>
+		                <td class="border border-gray-300 p-2">$${propertyTax}</td>
+		                <td class="border border-gray-300 p-2">$${maintenance}</td>
+		                <td class="border border-gray-300 p-2">$${additionalShare}</td>
+		                <td class="border border-gray-300 p-2">$${totalMonthly}</td>
+		                <td class="border border-gray-300 p-2">$${totalYearly}</td>
+		            </tr>`;
+		        tableBody.innerHTML += row;
 
 			    // Update total accumulators
 			    monthlyContributions[person.name] = parseFloat(totalMonthly);
@@ -483,16 +591,17 @@
 			});
 
 			// Add totals row at the bottom
-			const totalsRow = `<tr style="font-weight:bold">
-			    <td>Total</td>
-			    <td>$${totalUtilities.toFixed(2)}</td>
-			    <td>$${totalPropertyTax.toFixed(2)}</td>
-			    <td>$${totalMaintenance.toFixed(2)}</td>
-			    <td>$${totalAdditionalShare.toFixed(2)}</td>
-			    <td>$${totalOverallMonthly.toFixed(2)}</td>
-			    <td>$${totalOverallYearly.toFixed(2)}</td>
-			</tr>`;
-			tableBody.innerHTML += totalsRow;
+			const totalsRow = `
+		        <tr class="font-bold">
+		            <td class="border border-gray-300 p-2">Total</td>
+		            <td class="border border-gray-300 p-2">$${totalUtilities.toFixed(2)}</td>
+		            <td class="border border-gray-300 p-2">$${totalPropertyTax.toFixed(2)}</td>
+		            <td class="border border-gray-300 p-2">$${totalMaintenance.toFixed(2)}</td>
+		            <td class="border border-gray-300 p-2">$${totalAdditionalShare.toFixed(2)}</td>
+		            <td class="border border-gray-300 p-2">$${totalOverallMonthly.toFixed(2)}</td>
+		            <td class="border border-gray-300 p-2">$${totalOverallYearly.toFixed(2)}</td>
+		        </tr>`;
+		    tableBody.innerHTML += totalsRow;
 
 
 			createMonthlyPieChart(monthlyContributions);
@@ -566,7 +675,20 @@
 		    populateCostBreakdownTable();
 		    populateResourceTable();
 		    updateSliders();
+
+		    // Populate settings dropdown from localStorage
+		    const dropdown = document.getElementById('settingsDropdown');
+		    for (let i = 0; i < localStorage.length; i++) {
+		        const key = localStorage.key(i);
+		        if (key.startsWith('settings_')) {
+		            const option = document.createElement('option');
+		            option.value = key;
+		            option.textContent = key.replace('settings_', '');
+		            dropdown.appendChild(option);
+		        }
+		    }
 		};
+
 	</script>
 </body>
 </html>	
