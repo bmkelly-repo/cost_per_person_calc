@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Property Ownership Projection</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
         let initialData = {};
 
@@ -395,6 +397,95 @@ function displayYearlyProjections(projections) {
         function calculatePayments() {
             calculateYearlyProjections();
         }
+
+        function calculateYearsForAdditionalSharePurchase(purchaseValues) {
+            // const increasePercentage = parseFloat(document.getElementById('increase-percentage').value) / 100; // Annual increase in yearly costs
+            const initialTotalSharesIncreasePercentage = parseFloat(document.getElementById('total-shares-increase-percentage').value) / 100; // Starting share increase factor
+            const yearsRequired = purchaseValues.map(value => {
+                let ellenShares = initialData.initialPayments['Ellen'];
+                let restShares = Object.values(initialData.initialPayments).reduce((sum, amount) => sum + amount, 0) - ellenShares;
+                let yearlyCost = parseFloat(value);
+                let totalSharesIncreasePercentage = initialTotalSharesIncreasePercentage;
+                let years = 0;
+
+                while (ellenShares > 0) {
+                    // Calculate current ownership percentages
+                    const totalShares = ellenShares + restShares;
+                    const sharePercentageEllen = (ellenShares / totalShares) * 100;
+
+                    // Calculate currentYearIncrease dynamically
+                    const remainingYearsEstimate = Math.ceil(ellenShares / yearlyCost);
+                    const yearlyDecrement = totalSharesIncreasePercentage / remainingYearsEstimate;
+                    let currentYearIncrease = yearlyDecrement;// * (sharePercentageEllen / 100);
+
+                    // Adjust Ellen and Rest's shares based on currentYearIncrease
+                    ellenShares *= (1 + currentYearIncrease);
+                    restShares *= (1 + currentYearIncrease);
+
+                    // Deduct Ellen's yearly cost and update it for the next year with compounded increase
+                    ellenShares -= yearlyCost;
+                    restShares += yearlyCost;
+                    // yearlyCost *= (1 + increasePercentage); // Compounded yearly cost increase
+
+                    // Update totalSharesIncreasePercentage for the next year
+                    totalSharesIncreasePercentage -= yearlyDecrement;
+                    if (totalSharesIncreasePercentage < 0) totalSharesIncreasePercentage = 0;
+
+                    years++;
+                }
+                return years;
+            });
+            return yearsRequired;
+        }
+
+
+        let yearsRequiredChartInstance; // Variable to store the chart instance
+
+        function renderYearsRequiredChart() {
+            return;
+            const purchaseValues = [15000, 20000, 25000, 30000, 35000]; // Example values
+            const yearsRequired = calculateYearsForAdditionalSharePurchase(purchaseValues);
+
+            const ctx = document.getElementById('yearsRequiredChart').getContext('2d');
+            // Destroy existing chart instance if it exists
+            if (yearsRequiredChartInstance) {
+                yearsRequiredChartInstance.destroy();
+            }
+            yearsRequiredChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: purchaseValues.map(value => `$${value}`),
+                    datasets: [{
+                        label: 'Years Required for Ellen\'s Shares to Deplete',
+                        data: yearsRequired,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Additional Share Purchase ($)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Years Required'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderYearsRequiredChart);
+
+
     </script>
 </head>
 
@@ -406,7 +497,7 @@ function displayYearlyProjections(projections) {
         <div class="bg-white shadow p-4 rounded mb-4" id="inputs-section">
             <p>Loading initial data...</p>
         </div>
-        <button onclick="calculatePayments()" class="bg-blue-500 text-white rounded p-2 mt-4 hover:bg-blue-600">Calculate Yearly Projections</button>
+        <button onclick="calculatePayments();renderYearsRequiredChart();" class="bg-blue-500 text-white rounded p-2 mt-4 hover:bg-blue-600">Calculate Yearly Projections</button>
         
         <!-- Calculation Section -->
         <div class="bg-white shadow p-4 rounded mb-4" id="calculation-section">
@@ -444,4 +535,9 @@ function displayYearlyProjections(projections) {
             </div>
         </div>
     </div>
+    <div class="bg-white shadow p-4 rounded mb-4">
+        <h2 class="text-xl font-semibold mb-2">Years Required x Additional Share Purchase</h2>
+        <canvas id="yearsRequiredChart" width="400" height="200"></canvas>
+    </div>
+
 </body>
