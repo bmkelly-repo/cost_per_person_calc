@@ -1,0 +1,35 @@
+{
+  "initialSharesPrice": 1000000,
+  "mortgageBuyOut": 45000,
+  "initialCapitalInvestment": 20000,
+  "initialSharesPurchase": 27500,
+  "sharesYear0": 1020000,
+  "initialPayments": {
+    "Allie": 500,
+    "Brendan": 65000,
+    "Egan": 500,
+    "Emily": 10000,
+    "Jeff": 15000,
+    "Kevin": 1000,
+    "Rachel": 500,
+    "Ellen": 907500
+  },
+  "yearlyCosts": {
+    "utilitiesInsuranceSolar": {
+      "totalYearly": 20356.68,
+      "costType": "uniform"
+    },
+    "propertyTax": {
+      "totalYearly": 12000,
+      "costType": "proportional"
+    },
+    "maintenance": {
+      "totalYearly": 15000,
+      "costType": "uniform"
+    },
+    "additionalSharePurchase": {
+      "totalYearly": 19200,
+      "costType": "direct"
+    }
+  }
+}

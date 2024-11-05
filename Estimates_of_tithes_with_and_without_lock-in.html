@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Ownership Projection</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script>
+        let initialData = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+        	initialData = {
+			  "initialSharesPrice": 1000000,
+			  "mortgageBuyOut": 45000,
+			  "initialCapitalInvestment": 20000,
+			  "initialSharesPurchase": 27500,
+			  "sharesYear0": 1020000,
+			  "initialPayments": {
+			    "Allie": 500,
+			    "Brendan": 65000,
+			    "Egan": 500,
+			    "Emily": 10000,
+			    "Jeff": 15000,
+			    "Kevin": 1000,
+			    "Rachel": 500,
+			    "Ellen": 907500
+			  },
+			  "yearlyCosts": {
+			    "utilitiesInsuranceSolar": {
+			      "totalYearly": 20356,
+			      "costType": "uniform"
+			    },
+			    "propertyTax": {
+			      "totalYearly": 12000,
+			      "costType": "proportional"
+			    },
+			    "maintenance": {
+			      "totalYearly": 15000,
+			      "costType": "uniform"
+			    },
+			    "additionalSharePurchase": {
+			      "totalYearly": 19200,
+			      "costType": "direct"
+			    }
+			  }
+			}
+           
+	        showInitialShares(initialData.initialPayments);
+	        // showEllenYearlyCosts(initialData.yearlyCosts);
+	        updateEllenYearlyCosts();
+
+	        updatePercentages();
+        });
+
+        function showInitialShares(initialPayments) {
+		    const inputSection = document.getElementById('inputs-section');
+		    const totalInitialPayments = Object.values(initialPayments).reduce((sum, amount) => sum + amount, 0);
+		    inputSection.innerHTML = `
+		        <h3 class="text-lg font-semibold mb-2">Initial Shares Table</h3>
+		        <table class="min-w-full bg-white border">
+		            <thead>
+		                <tr>
+		                    <th class="border px-4 py-2">Participant</th>
+		                    <th class="border px-4 py-2">Initial Investment ($)</th>
+		                    <th class="border px-4 py-2">Percentage (%)</th>
+		                </tr>
+		            </thead>
+		            <tbody>
+		                ${Object.entries(initialPayments).map(([name, amount]) => `
+		                    <tr>
+		                        <td class="border px-4 py-2">${name}</td>
+		                        <td class="border px-4 py-2">
+		                            <input type="number" value="${amount}" id="${name}" class="border rounded p-2 w-full" oninput="updatePercentages()" />
+		                        </td>
+		                        <td class="border px-4 py-2" id="${name}-percentage">${((amount / totalInitialPayments) * 100).toFixed(2)}%</td>
+		                    </tr>
+		                `).join('')}
+		            </tbody>
+		        </table>
+		        <label class="block mt-4 text-sm font-medium">% Increase Per Year:</label>
+		        <input type="number" id="increase-percentage" value="3" class="border rounded p-2 w-full mb-4" />
+		        <label for="total-shares-increase-percentage" class="block mt-4 text-sm font-medium">Total Shares Increase (%)</label>
+    			<input type="number" id="total-shares-increase-percentage" value="70" class="border rounded p-2 w-full mb-4" />
+    			<label for="additional-share-purchase" class="block text-sm font-medium">Additional Share Purchase ($)</label>
+    			<input type="number" oninput="updatePercentages()" id="additional-share-purchase" value="${initialData.yearlyCosts['additionalSharePurchase'].totalYearly}" class="border rounded p-2 w-full mb-4" />
+
+		        <button onclick="resetInputs()" class="bg-red-500 text-white rounded p-2 mt-4 hover:bg-red-600">Reset to Initial Values</button>
+		    `;
+
+		}
+
+		function updatePercentages() {
+    const inputElements = document.querySelectorAll('#inputs-section input[type=number]');
+    let totalUpdatedPayments = 0;
+    inputElements.forEach(input => {
+        totalUpdatedPayments += parseFloat(input.value) || 0;
+    });
+
+    inputElements.forEach(input => {
+        const percentageCell = document.getElementById(`${input.id}-percentage`);
+        if (percentageCell) { // Check if the cell exists
+            const updatedValue = parseFloat(input.value) || 0;
+            percentageCell.textContent = `${((updatedValue / totalUpdatedPayments) * 100).toFixed(2)}%`;
+        }
+    });
+
+    // Update Ellen's yearly cost breakdown
+    updateEllenYearlyCosts();
+    calculateYearlyProjections();
+}
+
+function updateEllenYearlyCosts() {
+    const totalInitialPayments = Array.from(document.querySelectorAll('#inputs-section input[type=number]')).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+    const ellenInvestment = parseFloat(document.getElementById('Ellen').value) || 0;
+    const sharePercentages = (ellenInvestment / totalInitialPayments) * 100;
+
+    let ellenCosts = {};
+    let totalEllenCost = 0;
+    let totalYearlyCost = 0;
+
+    for (const [costName, costDetails] of Object.entries(initialData.yearlyCosts)) {
+		let cost = 0;
+		if (costDetails.costType === 'uniform') {
+		    cost = costDetails.totalYearly / Object.keys(initialData.initialPayments).length;
+		} else if (costDetails.costType === 'proportional') {
+		    cost = (sharePercentages / 100) * costDetails.totalYearly;
+		} else if (costDetails.costType === 'direct') {
+		    cost = costDetails.totalYearly; // Direct cost is fully subtracted from Ellen
+		}
+
+		// Override cost with input value if it is 'additionalSharePurchase'
+		if (costName === 'additionalSharePurchase') {
+		    cost = parseFloat(document.getElementById('additional-share-purchase').value);
+		}
+        ellenCosts[costName] = cost;
+        totalEllenCost += cost;
+        if (costName === 'additionalSharePurchase') {
+			totalYearlyCost += cost;
+        }else{
+        	totalYearlyCost += costDetails.totalYearly;
+        }
+        
+    }
+
+    const calculationSection = document.getElementById('calculation-section');
+    calculationSection.innerHTML = `
+        <h3 class="text-lg font-semibold mb-2">Ellen's Initial Yearly Cost Breakdown</h3>
+        <table class="min-w-full bg-white border">
+            <thead>
+                <tr>
+                    <th class="border px-4 py-2">Cost Type</th>
+                    <th class="border px-4 py-2">Allocation Type</th>
+                    <th class="border px-4 py-2">Ellen's Cost ($)</th>
+                    <th class="border px-4 py-2">Yearly Total Cost ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${Object.entries(ellenCosts).map(([costType, cost]) => `
+                    <tr>
+                        <td class="border px-4 py-2">${costType.replace(/([A-Z])/g, ' $1').trim()}</td>
+                        <td class="border px-4 py-2">
+                            ${initialData.yearlyCosts[costType].costType === 'uniform' ? 'Uniform (1/8)' : initialData.yearlyCosts[costType].costType === 'direct' ? 'Direct (100%)' : `Proportional (${sharePercentages.toFixed(2)}%)`}
+                        </td>
+                        <td class="border px-4 py-2">$${cost.toFixed(2)}</td>
+                        <td class="border px-4 py-2">$${(costType === 'additionalSharePurchase' ? parseFloat(document.getElementById('additional-share-purchase').value) : initialData.yearlyCosts[costType].totalYearly).toFixed(2)}</td>
+
+                    </tr>
+                `).join('')}
+                <tr class="font-semibold">
+                    <td class="border px-4 py-2">Total</td>
+                    <td class="border px-4 py-2">-</td>
+                    <td class="border px-4 py-2">$${totalEllenCost.toFixed(2)}</td>
+                    <td class="border px-4 py-2">$${totalYearlyCost.toFixed(2)}</td>
+                </tr>
+            </tbody>
+        </table>
+    `;
+
+    window.latestTotalEllenCost = totalEllenCost;
+}
+
+
+
+
+
+
+        // function showEllenYearlyCosts(yearlyCosts) {
+		//     const calculationSection = document.getElementById('calculation-section');
+		//     const sharePercentages = initialData.initialPayments['Ellen'] / Object.values(initialData.initialPayments).reduce((sum, amount) => sum + amount, 0) * 100;
+
+		//     let ellenCosts = {};
+		//     for (const [costType, costDetails] of Object.entries(yearlyCosts)) {
+		//         let cost = 0;
+		//         if (costDetails.costType === 'uniform') {
+		//             cost = costDetails.totalYearly / Object.keys(initialData.initialPayments).length;
+		//         } else if (costDetails.costType === 'proportional') {
+		//             cost = (sharePercentages / 100) * costDetails.totalYearly;
+		//         }else if (costDetails.costType === 'direct') {
+		//             cost = costDetails.totalYearly;
+		//         }
+		//         ellenCosts[costType] = cost;
+		//     }
+
+		//     calculationSection.innerHTML = `
+		//         <h3 class="text-lg font-semibold mb-2">Ellen's Initial Yearly Cost Breakdown</h3>
+		//         <table class="min-w-full bg-white border">
+		//             <thead>
+		//                 <tr>
+		//                     <th class="border px-4 py-2">Cost Type</th>
+		//                     <th class="border px-4 py-2">Allocation Type</th>
+		//                     <th class="border px-4 py-2">Ellen's Cost ($)</th>
+		//                     <th class="border px-4 py-2">Yearly Total Cost ($)</th>
+		//                 </tr>
+		//             </thead>
+		//             <tbody>
+		//                 ${Object.entries(ellenCosts).map(([costType, cost]) => `
+		//                     <tr>
+		//                         <td class="border px-4 py-2">${costType.replace(/([A-Z])/g, ' $1').trim()}</td>
+		//                         <td class="border px-4 py-2">
+		//                             ${initialData.yearlyCosts[costType].costType === 'uniform' ? 'Uniform (1/8)' : initialData.yearlyCosts[costType].costType === 'direct' ? 'Direct (100%)' : `Proportional (${sharePercentages.toFixed(2)}%)`}
+        //                 </td>
+		//                         <td class="border px-4 py-2">$${cost.toFixed(2)}</td>
+		//                         <td class="border px-4 py-2">$${yearlyCosts[costType].totalYearly.toFixed(2)}</td>
+		//                     </tr>
+		//                 `).join('')}
+		//             </tbody>
+		//         </table>
+		//     `;
+		// }
+
+        function resetInputs() {
+            showInitialShares(initialData.initialPayments);
+        }
+
+function calculateYearlyProjections() {
+    const inputElements = document.querySelectorAll('#inputs-section input[type=number]');
+    const data = {};
+    inputElements.forEach(input => {
+        data[input.id] = parseFloat(input.value) || 0;
+    });
+
+    let ellenShares = data['Ellen'];
+    let restShares = Object.values(data).reduce((sum, amount) => sum + amount, 0) - ellenShares;
+    const increasePercentage = parseFloat(document.getElementById('increase-percentage').value) / 100;
+    let totalSharesIncreasePercentage = parseFloat(document.getElementById('total-shares-increase-percentage').value) / 100;
+    const initialTotalSharesIncreasePercentage = totalSharesIncreasePercentage;
+    const yearlyProjections = [];
+    let year = 1;
+
+    while (ellenShares > 0) {
+        // Recalculate yearlyCost based on the updated shares and allocation
+        const totalShares = ellenShares + restShares;
+        const sharePercentageEllen = (ellenShares / totalShares) * 100;
+
+        let yearlyCost = 0;
+        let totalYearlyCost = 0;
+        for (const [costType, costDetails] of Object.entries(initialData.yearlyCosts)) {
+            let adjustedYearlyCost = (costType === 'additionalSharePurchase')
+    ? parseFloat(document.getElementById('additional-share-purchase').value) * Math.pow(1 + increasePercentage, year - 1) // Load the value from the input for Year 1
+    : costDetails.totalYearly * Math.pow(1 + increasePercentage, year - 1);
+            if (costDetails.costType === 'uniform') {
+                yearlyCost += adjustedYearlyCost / Object.keys(initialData.initialPayments).length;
+            } else if (costDetails.costType === 'proportional') {
+                yearlyCost += (sharePercentageEllen / 100) * adjustedYearlyCost;
+            } else if (costDetails.costType === 'direct') {
+                yearlyCost += adjustedYearlyCost; // Direct cost applies fully to Ellen
+            }
+            totalYearlyCost += adjustedYearlyCost;
+        }
+
+                // Calculate the yearly decrement based on remaining years
+// Calculate the yearly decrement based on remaining years
+const remainingYearsEstimate = Math.ceil(ellenShares / yearlyCost);
+console.log(`Estimated remaining years: ${remainingYearsEstimate}`);
+
+const yearlyDecrement = totalSharesIncreasePercentage / remainingYearsEstimate;
+console.log(`Yearly decrement calculated: ${yearlyDecrement}`);
+
+// Decrease the total shares increase percentage gradually
+totalSharesIncreasePercentage -= yearlyDecrement;
+console.log(`Total shares increase percentage after decrement: ${totalSharesIncreasePercentage}`);
+
+if (totalSharesIncreasePercentage < 0) {
+    totalSharesIncreasePercentage = 0;
+    console.log(`Total shares increase percentage adjusted to 0`);
+}
+
+
+        let currentYearIncrease = yearlyDecrement * (sharePercentageEllen / 100);
+        ellenShares *= (1 + currentYearIncrease)
+        restShares *= (1 + currentYearIncrease)
+
+        yearlyProjections.push({
+            year,
+            ellenShares: ellenShares,
+            restShares: restShares,
+            yearlyCost: yearlyCost,
+            totalYearlyCost: totalYearlyCost,
+            currentYearIncrease: currentYearIncrease * 100 // Convert to percentage for display
+        });
+
+        // Deduct Ellen's recalculated yearly cost from her shares and add it to the rest
+        ellenShares -= yearlyCost;
+        restShares += yearlyCost;
+
+        // If Ellen's shares become negative, capture the last state and stop
+        if (ellenShares <= 0) {
+            yearlyProjections.push({
+                year: year + 1,
+                ellenShares: ellenShares,
+                restShares: restShares,
+                yearlyCost: yearlyCost,
+                totalYearlyCost: totalYearlyCost,
+                currentYearIncrease: 0 // No increase after shares are zero
+            });
+            break;
+        }
+
+        // Apply increase to Ellen's and rest's shares for the next year
+        ellenShares *= (1 + increasePercentage);
+        restShares *= (1 + increasePercentage);
+
+        // Apply the calculated decrease to total shares
+        ellenShares *= (1 + currentYearIncrease);
+        restShares *= (1 + currentYearIncrease);
+
+
+
+
+        year++;
+    }
+
+    displayYearlyProjections(yearlyProjections);
+}
+
+function displayYearlyProjections(projections) {
+    const summarySection = document.getElementById('summary-section');
+    summarySection.innerHTML = '<h3 class="text-lg font-semibold mb-2">Yearly Projections</h3>';
+
+    // Create header row with year columns
+    let tableContent = `
+        <table class="min-w-full bg-white border">
+            <thead>
+                <tr>
+                    <th class="border px-4 py-2">Participant</th>
+                    ${projections.map(({ year }) => `<th class="border px-4 py-2">Year ${year}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border px-4 py-2">Ellen</td>
+                    ${projections.map(({ ellenShares, restShares }) => {
+                        const totalShares = ellenShares + restShares;
+                        return `<td class="border px-4 py-2">$${ellenShares.toFixed(2)} (${((ellenShares / totalShares) * 100).toFixed(2)}%)</td>`;
+                    }).join('')}
+                </tr>
+                <tr>
+                    <td class="border px-4 py-2">Rest</td>
+                    ${projections.map(({ ellenShares, restShares }) => {
+                        const totalShares = ellenShares + restShares;
+                        return `<td class="border px-4 py-2">$${restShares.toFixed(2)}</td>`;
+                    }).join('')}
+                </tr>
+                <tr class="font-semibold">
+                    <td class="border px-4 py-2">Total Shares</td>
+                    ${projections.map(({ ellenShares, restShares }) => {
+                        const totalShares = ellenShares + restShares;
+                        return `<td class="border px-4 py-2">$${totalShares.toFixed(2)}</td>`;
+                    }).join('')}
+                </tr>
+                <tr class="font-semibold">
+                    <td class="border px-4 py-2">Ellen's Yearly Cost</td>
+                    ${projections.map(({ yearlyCost }) => `<td class="border px-4 py-2">$${yearlyCost.toFixed(2)}</td>`).join('')}
+                </tr>
+                <tr class="font-semibold">
+				    <td class="border px-4 py-2">Total Yearly Cost</td>
+				    ${projections.map(({ totalYearlyCost, currentYearIncrease }) => 
+				        `<td class="border px-4 py-2">$${totalYearlyCost.toFixed(2)}<br>(${(parseFloat(document.getElementById('increase-percentage').value))}% (+ ${currentYearIncrease.toFixed(2)}%))</td>`
+				    ).join('')}
+				</tr>
+
+                <tr class="font-semibold">
+                    <td class="border px-4 py-2">Yearly Additional Shares Increase (%)</td>
+                    ${projections.map(({ currentYearIncrease }) => `<td class="border px-4 py-2">${currentYearIncrease.toFixed(2)}%</td>`).join('')}
+                </tr>
+            </tbody>
+        </table>
+    `;
+
+    summarySection.innerHTML += tableContent;
+}
+
+
+
+        function calculatePayments() {
+            calculateYearlyProjections();
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4">Property Ownership Projection</h1>
+        
+        <!-- Initial Shares Section -->
+        <div class="bg-white shadow p-4 rounded mb-4" id="inputs-section">
+            <p>Loading initial data...</p>
+        </div>
+        <button onclick="calculatePayments()" class="bg-blue-500 text-white rounded p-2 mt-4 hover:bg-blue-600">Calculate Yearly Projections</button>
+        
+        <!-- Calculation Section -->
+        <div class="bg-white shadow p-4 rounded mb-4" id="calculation-section">
+            <h2 class="text-xl font-semibold mb-2">Calculation Overview</h2>
+            <h3 class="text-lg font-semibold mb-2">Ellen's Initial Yearly Cost Breakdown</h3>
+            <table class="min-w-full bg-white border">
+                <thead>
+                    <tr>
+                        <th class="border px-4 py-2">Cost Type</th>
+                        <th class="border px-4 py-2">Allocation Type</th>
+                        <th class="border px-4 py-2">Ellen's Cost ($)</th>
+                        <th class="border px-4 py-2">Yearly Total Cost ($)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Object.entries(ellenCosts).map(([costType, cost]) => `
+                        <tr>
+                            <td class="border px-4 py-2">${costType.replace(/([A-Z])/g, ' $1').trim()}</td>
+                            <td class="border px-4 py-2">
+                                ${yearlyCosts[costType].costType === 'uniform' ? 'Uniform' : `Proportional (${sharePercentages['Ellen'].toFixed(2)}%)`}
+                            </td>
+                            <td class="border px-4 py-2">$${cost.toFixed(2)}</td>
+                            <td class="border px-4 py-2">$${yearlyCosts[costType].totalYearly.toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Summary Section -->
+        <div class="bg-white shadow p-4 rounded" id="summary-section">
+            <h2 class="text-xl font-semibold mb-2">Summary</h2>
+            <div class="space-y-2">
+                <p>Yearly projections of Ellen's and the rest's ownership shares will be displayed here.</p>
+            </div>
+        </div>
+    </div>
+</body>
